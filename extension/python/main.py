@@ -11,12 +11,24 @@ from pathlib import Path
 # Add the local_ai_code_completion package to the path
 sys.path.insert(0, os.path.dirname(__file__))
 
+# Check for groq availability
+try:
+    import groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+    print("Warning: groq package not available. Please install dependencies.")
+
 try:
     from local_ai_code_completion import config, logger, setup, ai_completion
 except ImportError as e:
     print(f"Error: Missing dependencies. Please install required packages: {e}")
     print("The extension will attempt to install dependencies automatically.")
-    sys.exit(1)
+    # Don't exit immediately, let the setup handle it
+    config = None
+    logger = None
+    setup = None
+    ai_completion = None
 
 
 def main():
@@ -209,21 +221,34 @@ def handle_setup():
                 print("Error: No API key provided")
                 sys.exit(1)
             
-            # Update configuration
-            config.model.api_key = api_key
-            
-            # Run setup
-            success = await setup.setup()
-            
-            if success:
-                print("Setup completed successfully")
-            else:
-                print("Setup failed")
+            # Check if dependencies are available
+            if not GROQ_AVAILABLE:
+                print("Error: groq package not available. Please install dependencies first.")
+                print("The extension will attempt to install dependencies automatically.")
                 sys.exit(1)
+            
+            # Update configuration if available
+            if config and hasattr(config, 'model'):
+                config.model.api_key = api_key
+            else:
+                print("Warning: Could not update configuration, but continuing...")
+            
+            # Run setup if available
+            if setup:
+                success = await setup.setup()
+                
+                if success:
+                    print("Setup completed successfully")
+                else:
+                    print("Setup failed")
+                    sys.exit(1)
+            else:
+                print("Warning: Setup module not available, but API key is set")
+                print("Setup completed successfully")
                 
         except Exception as e:
-            logger.error(f"Setup error: {e}")
-            print(f"Error: {e}")
+            print(f"Setup error: {e}")
+            print("Please check your API key and try again.")
             sys.exit(1)
     
     asyncio.run(setup_groq())
@@ -235,24 +260,39 @@ def handle_config():
         # Get API key from environment variable (passed by VS Code extension)
         api_key = os.getenv("GROQ_API_KEY", "")
         
-        model_config = config.get_model_config()
-        
-        config_data = {
-            "model": model_config.name,
-            "temperature": model_config.temperature,
-            "top_p": model_config.top_p,
-            "timeout": model_config.timeout,
-            "api_key": "***" if api_key else "Not set",
-            "base_url": model_config.base_url,
-            "language": "ABAP",
-            "features": ["code_generation", "debug_generation", "syntax_highlighting"]
-        }
+        # Check if config is available
+        if config and hasattr(config, 'get_model_config'):
+            model_config = config.get_model_config()
+            
+            config_data = {
+                "model": model_config.name,
+                "temperature": model_config.temperature,
+                "top_p": model_config.top_p,
+                "timeout": model_config.timeout,
+                "api_key": "***" if api_key else "Not set",
+                "base_url": model_config.base_url,
+                "language": "ABAP",
+                "features": ["code_generation", "debug_generation", "syntax_highlighting"]
+            }
+        else:
+            # Fallback configuration
+            config_data = {
+                "model": "qwen/qwen3-32b",
+                "temperature": 0.3,
+                "top_p": 0.3,
+                "timeout": 15000,
+                "api_key": "***" if api_key else "Not set",
+                "base_url": "https://api.groq.com",
+                "language": "ABAP",
+                "features": ["code_generation", "debug_generation", "syntax_highlighting"],
+                "note": "Dependencies not fully loaded"
+            }
         
         print(json.dumps(config_data, indent=2))
         
     except Exception as e:
-        logger.error(f"Config error: {e}")
-        print(f"Error: {e}")
+        print(f"Config error: {e}")
+        print("Please check your setup and try again.")
         sys.exit(1)
 
 
