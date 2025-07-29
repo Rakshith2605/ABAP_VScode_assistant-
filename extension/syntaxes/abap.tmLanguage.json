@@ -1,0 +1,82 @@
+{
+  "name": "ABAP",
+  "scopeName": "source.abap",
+  "patterns": [
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#numbers"
+    }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.abap",
+          "match": "\\b(REPORT|PROGRAM|CLASS|INTERFACE|METHOD|FUNCTION|FORM|MODULE|SELECT|LOOP|DO|WHILE|IF|CASE|TRY|CATCH|CLEANUP|WITH|END|ENDIF|ENDLOOP|ENDDO|ENDWHILE|ENDCASE|ENDTRY|ENDCATCH|ENDCLEANUP|ENDWITH|ENDFORM|ENDFUNCTION|ENDMODULE|ENDMETHOD|ENDCLASS|ENDINTERFACE|ENDPROGRAM|ENDREPORT)\\b"
+        },
+        {
+          "name": "keyword.declaration.abap",
+          "match": "\\b(DATA|TYPES|TABLES|CONSTANTS|PARAMETERS|SELECTION-SCREEN|AT|ON|BEGIN|CALL|EXIT|CONTINUE|RETURN|RAISE|MESSAGE|WRITE|READ|MODIFY|DELETE|INSERT|UPDATE|COMMIT|ROLLBACK|CLEAR|FREE|REFRESH|SORT|DESCRIBE|LINE_COUNT|SY_TABIX|SY_SUBRC|SY_INDEX|SY_DATUM|SY_UZEIT|SY_UNAME|SY_MANDT|SY_LANGU|SY_CARRID|SY_CONNID|SY_FLTIME|SY_DATE|SY_TIME|SY_TIMESTAMP|SY_TZONE|SY_ZONLO|SY_ZONHI|SY_COUNTRY|SY_LANGU|SY_LISEL|SY_LINCT|SY_LINNO|SY_PAGNO|SY_SPONO|SY_REPID|SY_DYNNR|SY_CALLD|SY_CALLR|SY_CALLC|SY_CALLP|SY_CALLI|SY_CALLT|SY_CALLX|SY_CALLY|SY_CALLZ|SY_CALLV|SY_CALLW|SY_CALLU|SY_CALLS|SY_CALLA|SY_CALLB|SY_CALLE|SY_CALLF|SY_CALLG|SY_CALLH|SY_CALLJ|SY_CALLK|SY_CALLL|SY_CALLM|SY_CALLN|SY_CALLO|SY_CALLQ|SY_CALLR|SY_CALLS|SY_CALLT|SY_CALLU|SY_CALLV|SY_CALLW|SY_CALLX|SY_CALLY|SY_CALLZ)\\b"
+        },
+        {
+          "name": "keyword.operator.abap",
+          "match": "\\b(AND|OR|NOT|EQ|NE|LT|LE|GT|GE|CO|CN|CA|NA|CS|NS|CP|NP|IS|IS NOT|IN|NOT IN|BETWEEN|NOT BETWEEN|LIKE|NOT LIKE|REGEX|NOT REGEX)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.abap",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.abap",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.abap",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.abap",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.asterisk.abap",
+          "match": "^\\*.*$"
+        },
+        {
+          "name": "comment.line.double-quote.abap",
+          "match": "\".*$"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.abap",
+          "match": "\\b\\d+(\\.\\d+)?\\b"
+        }
+      ]
+    }
+  }
+} 

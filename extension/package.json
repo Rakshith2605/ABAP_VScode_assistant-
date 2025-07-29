@@ -1,0 +1,149 @@
+{
+  "name": "abap-code-assistant",
+  "displayName": "ABAP Code Assistant",
+  "description": "AI-powered ABAP code assistant with code generation and debugging using Groq API",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "abap",
+    "sap",
+    "ai",
+    "code-completion",
+    "groq"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/abap-code-assistant.git"
+  },
+    "license": "MIT",
+  "publisher": "your-publisher-name",
+  "activationEvents": [
+    "onCommand:abap-code-assistant.generateCode",
+    "onCommand:abap-code-assistant.generateDebug",
+    "onCommand:abap-code-assistant.generateFromComment",
+    "onCommand:abap-code-assistant.setup",
+    "onCommand:abap-code-assistant.config",
+    "onLanguage:abap"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "abap-code-assistant.generateCode",
+        "title": "ABAP Code Assistant: Generate Code",
+        "category": "ABAP Code Assistant"
+      },
+      {
+        "command": "abap-code-assistant.generateDebug",
+        "title": "ABAP Code Assistant: Generate Debug Code",
+        "category": "ABAP Code Assistant"
+      },
+      {
+        "command": "abap-code-assistant.generateFromComment",
+        "title": "ABAP Code Assistant: Generate Code from Comment",
+        "category": "ABAP Code Assistant"
+      },
+      {
+        "command": "abap-code-assistant.setup",
+        "title": "ABAP Code Assistant: Setup Groq API",
+        "category": "ABAP Code Assistant"
+      },
+      {
+        "command": "abap-code-assistant.config",
+        "title": "ABAP Code Assistant: Show Configuration",
+        "category": "ABAP Code Assistant"
+      },
+      {
+        "command": "abap-code-assistant.debug",
+        "title": "ABAP Code Assistant: Debug API Key",
+        "category": "ABAP Code Assistant"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "abap-code-assistant.generateCode",
+        "key": "ctrl+shift+g",
+        "when": "editorLangId == abap"
+      },
+      {
+        "command": "abap-code-assistant.generateDebug",
+        "key": "ctrl+shift+d",
+        "when": "editorLangId == abap"
+      },
+      {
+        "command": "abap-code-assistant.generateFromComment",
+        "key": "ctrl+shift+g",
+        "when": "editorLangId == abap && editorHasSelection"
+      }
+    ],
+    "languages": [
+      {
+        "id": "abap",
+        "aliases": ["ABAP", "SAP ABAP"],
+        "extensions": [".abap", ".sap", ".sapabap"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "abap",
+        "scopeName": "source.abap",
+        "path": "./syntaxes/abap.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "ABAP Code Assistant",
+      "properties": {
+        "abapCodeAssistant.groqApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Groq API key for code generation"
+        },
+        "abapCodeAssistant.model": {
+          "type": "string",
+          "default": "qwen/qwen3-32b",
+          "description": "Groq model to use for code generation"
+        },
+        "abapAiCodeCompletion.temperature": {
+          "type": "number",
+          "default": 0.3,
+          "minimum": 0.0,
+          "maximum": 2.0,
+          "description": "Temperature for code generation (0.0-2.0)"
+        },
+        "abapAiCodeCompletion.topP": {
+          "type": "number",
+          "default": 0.3,
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Top-p for code generation (0.0-1.0)"
+        },
+        "abapAiCodeCompletion.sapSystem": {
+          "type": "string",
+          "default": "S4HANA",
+          "enum": ["S4HANA", "ECC", "BW", "CRM", "SRM"],
+          "description": "SAP System version"
+        },
+        "abapAiCodeCompletion.debugMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable ABAP debugging features"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.60.0",
+    "@types/node": "^16.0.0",
+    "vscode-test": "^1.6.1"
+  }
+} 

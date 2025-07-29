@@ -1,0 +1,35 @@
+{
+  "comments": {
+    "lineComment": "*",
+    "blockComment": ["\"", "\""]
+  },
+  "brackets": [
+    ["(", ")"],
+    ["[", "]"],
+    ["{", "}"]
+  ],
+  "autoClosingPairs": [
+    { "open": "(", "close": ")" },
+    { "open": "[", "close": "]" },
+    { "open": "{", "close": "}" },
+    { "open": "\"", "close": "\"" },
+    { "open": "'", "close": "'" }
+  ],
+  "surroundingPairs": [
+    ["(", ")"],
+    ["[", "]"],
+    ["{", "}"],
+    ["\"", "\""],
+    ["'", "'"]
+  ],
+  "indentationRules": {
+    "increaseIndentPattern": "^(REPORT|PROGRAM|CLASS|INTERFACE|METHOD|FUNCTION|FORM|MODULE|SELECT|LOOP|DO|WHILE|IF|CASE|TRY|CATCH|CLEANUP|WITH|DATA|TYPES|TABLES|CONSTANTS|PARAMETERS|SELECTION-SCREEN|AT|ON|END|BEGIN|CATCH|CLEANUP)",
+    "decreaseIndentPattern": "^(END|ENDIF|ENDLOOP|ENDDO|ENDWHILE|ENDCASE|ENDTRY|ENDCATCH|ENDCLEANUP|ENDWITH|ENDFORM|ENDFUNCTION|ENDMODULE|ENDMETHOD|ENDCLASS|ENDINTERFACE|ENDPROGRAM|ENDREPORT)"
+  },
+  "folding": {
+    "markers": {
+      "start": "^\\s*(REPORT|PROGRAM|CLASS|INTERFACE|METHOD|FUNCTION|FORM|MODULE|SELECT|LOOP|DO|WHILE|IF|CASE|TRY|CATCH|CLEANUP|WITH|DATA|TYPES|TABLES|CONSTANTS|PARAMETERS|SELECTION-SCREEN|AT|ON|BEGIN)",
+      "end": "^\\s*(END|ENDIF|ENDLOOP|ENDDO|ENDWHILE|ENDCASE|ENDTRY|ENDCATCH|ENDCLEANUP|ENDWITH|ENDFORM|ENDFUNCTION|ENDMODULE|ENDMETHOD|ENDCLASS|ENDINTERFACE|ENDPROGRAM|ENDREPORT)"
+    }
+  }
+} 
