@@ -19,10 +19,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/abap-code-assistant.git"
+    "url": "https://github.com/Rakshith2605/ABAP_VScode_assistant-.git"
   },
     "license": "MIT",
-  "publisher": "your-publisher-name",
+  "publisher": "Rakshith Dharmappa",
   "activationEvents": [
     "onCommand:abap-code-assistant.generateCode",
     "onCommand:abap-code-assistant.generateDebug",
