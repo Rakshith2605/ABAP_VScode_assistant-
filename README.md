@@ -1,7 +1,11 @@
 # ABAP AI Code Completion
 
 A VS Code extension that provides AI-powered ABAP code completion and debugging using the Groq API.
+## Demo
 
+![ABAP Code Assistant Demo](public/abap_vid.gif)
+
+*Watch the ABAP Code Assistant in action - generating code from comments seamlessly!*
 ## Features
 
 - **ABAP Code Generation**: Generate ABAP code following SAP best practices
