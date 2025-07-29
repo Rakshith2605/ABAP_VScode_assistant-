@@ -256,28 +256,43 @@ async function generateFromCommentCode() {
 
 async function setupGroqAPI() {
     try {
-        // First, install dependencies
-        const pythonPath = getPythonPath();
-        await checkAndInstallDependencies(pythonPath);
-        
-        const apiKey = await vscode.window.showInputBox({
-            prompt: 'Enter your Groq API key',
-            password: true,
-            placeHolder: 'gsk_...'
-        });
-
-        if (apiKey) {
-            // Update configuration
-            await vscode.workspace.getConfiguration('abapCodeAssistant').update('groqApiKey', apiKey, vscode.ConfigurationTarget.Global);
+        // Show progress
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Setting up ABAP Code Assistant...",
+            cancellable: false
+        }, async (progress) => {
+            progress.report({ message: "Installing dependencies..." });
             
-            // Test the setup with API key as environment variable
-            const result = await callPythonBackend('setup', { apiKey: apiKey });
-            if (result && result.includes('successful')) {
-                vscode.window.showInformationMessage('Groq API setup successful!');
+            // First, install dependencies
+            const pythonPath = getPythonPath();
+            await checkAndInstallDependencies(pythonPath);
+            
+            progress.report({ message: "Requesting API key..." });
+            
+            const apiKey = await vscode.window.showInputBox({
+                prompt: 'Enter your Groq API key',
+                password: true,
+                placeHolder: 'gsk_...'
+            });
+
+            if (apiKey) {
+                progress.report({ message: "Testing API key..." });
+                
+                // Update configuration
+                await vscode.workspace.getConfiguration('abapCodeAssistant').update('groqApiKey', apiKey, vscode.ConfigurationTarget.Global);
+                
+                // Test the setup with API key as environment variable
+                const result = await callPythonBackend('setup', { apiKey: apiKey });
+                if (result && result.includes('successful')) {
+                    vscode.window.showInformationMessage('✅ Groq API setup successful!');
+                } else {
+                    vscode.window.showErrorMessage('❌ Setup failed. Please check your API key.');
+                }
             } else {
-                vscode.window.showErrorMessage('Setup failed. Please check your API key.');
+                vscode.window.showWarningMessage('Setup cancelled. No API key provided.');
             }
-        }
+        });
     } catch (error) {
         vscode.window.showErrorMessage(`Setup error: ${error.message}`);
     }
@@ -353,16 +368,18 @@ async function callPythonBackend(command, args = {}) {
         console.log(`Working directory: ${path.join(__dirname, 'python')}`);
         console.log(`Extension directory: ${__dirname}`);
         
-        // Check if Python dependencies are installed
+        // Check if Python dependencies are installed (silently)
         try {
             await checkAndInstallDependencies(pythonPath);
         } catch (error) {
             console.warn(`Warning: Could not install dependencies: ${error.message}`);
-            // Show user-friendly message
-            vscode.window.showWarningMessage(
-                'ABAP Code Assistant: Python dependencies not installed. ' +
-                'Please run "ABAP Code Assistant: Setup Groq API" to install dependencies.'
-            );
+            // Only show warning if it's a critical error, not just missing dependencies
+            if (error.message.includes('Failed to start') || error.message.includes('timeout')) {
+                vscode.window.showWarningMessage(
+                    'ABAP Code Assistant: Could not install dependencies automatically. ' +
+                    'Please run "ABAP Code Assistant: Setup Groq API" to install dependencies manually.'
+                );
+            }
         }
         
         const processArgs = [scriptPath, command];
@@ -455,11 +472,13 @@ async function checkAndInstallDependencies(pythonPath) {
                 resolve();
             } else {
                 console.warn(`⚠️ Dependencies check failed (code ${code}): ${stderr}`);
-                // Don't fail the main operation, but show a warning
-                vscode.window.showWarningMessage(
-                    'ABAP Code Assistant: Some dependencies may not be installed. ' +
-                    'Please run "ABAP Code Assistant: Setup Groq API" to install dependencies.'
-                );
+                // Only show warning for critical errors, not missing dependencies
+                if (code !== 1 || !stderr.includes('Missing packages')) {
+                    vscode.window.showWarningMessage(
+                        'ABAP Code Assistant: Could not verify dependencies. ' +
+                        'Please run "ABAP Code Assistant: Setup Groq API" to install dependencies.'
+                    );
+                }
                 resolve();
             }
         });
