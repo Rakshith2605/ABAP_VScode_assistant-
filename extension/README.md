@@ -14,7 +14,7 @@ A VS Code extension that provides AI-powered ABAP code assistant with code gener
 
 ## Demo
 
-![ABAP Code Assistant Demo](assets/abap_vid.gif)
+![ABAP Code Assistant Demo](publi/abap_vid.gif)
 
 *Watch the ABAP Code Assistant in action - generating code from comments seamlessly!*
 
