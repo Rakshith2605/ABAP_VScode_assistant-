@@ -22,7 +22,7 @@
     "url": "https://github.com/Rakshith2605/ABAP_VScode_assistant-.git"
   },
     "license": "MIT",
-  "publisher": "Rakshith Dharmappa",
+  "publisher": "dharmappar",
   "activationEvents": [
     "onCommand:abap-code-assistant.generateCode",
     "onCommand:abap-code-assistant.generateDebug",
