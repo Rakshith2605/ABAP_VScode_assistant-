@@ -6,27 +6,55 @@ import asyncio
 import json
 import time
 from typing import AsyncGenerator, Optional, Dict, Any
-import groq
-from .config import config
-from .logger import logger
+
+# Conditional import to handle missing dependencies
+try:
+    import groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    GROQ_AVAILABLE = False
+    print("Warning: groq package not available. Please install dependencies.")
+
+try:
+    from .config import config
+    from .logger import logger
+except ImportError as e:
+    print(f"Warning: Could not import config or logger: {e}")
+    config = None
+    logger = None
 
 
 class AICodeCompletion:
     """Handles AI code completion using Groq API"""
     
     def __init__(self):
-        self.model_config = config.get_model_config()
+        if not GROQ_AVAILABLE:
+            print("Error: groq package not available. Please install dependencies.")
+            self.model_config = None
+            self.is_generating = False
+            self.is_aborted = False
+            self.client = None
+            return
+            
+        if config:
+            self.model_config = config.get_model_config()
+        else:
+            self.model_config = None
         self.is_generating = False
         self.is_aborted = False
         self.client = None  # Initialize client lazily
     
     def _get_client(self):
         """Get or initialize the Groq client"""
+        if not GROQ_AVAILABLE:
+            print("Error: groq package not available. Please install dependencies.")
+            return None
+            
         if self.client is not None:
             return self.client
         
-        if not self.model_config.api_key:
-            logger.warning("No Groq API key provided. Set GROQ_API_KEY environment variable.")
+        if not self.model_config or not self.model_config.api_key:
+            print("No Groq API key provided. Set GROQ_API_KEY environment variable.")
             return None
         
         try:
@@ -35,17 +63,17 @@ class AICodeCompletion:
             return self.client
         except TypeError as e:
             # Handle version compatibility issues
-            logger.warning(f"Groq client initialization issue: {e}")
-            logger.info("Trying alternative initialization...")
+            print(f"Groq client initialization issue: {e}")
+            print("Trying alternative initialization...")
             try:
                 # Try without any additional parameters
                 self.client = groq.Groq(api_key=self.model_config.api_key)
                 return self.client
             except Exception as e2:
-                logger.error(f"Failed to initialize Groq client: {e2}")
+                print(f"Failed to initialize Groq client: {e2}")
                 return None
         except Exception as e:
-            logger.error(f"Failed to initialize Groq client: {e}")
+            print(f"Failed to initialize Groq client: {e}")
             return None
     
     def create_prompt(self, prefix: str, suffix: str) -> str:
@@ -64,9 +92,13 @@ class AICodeCompletion:
     
     async def generate_code_stream(self, prefix: str, suffix: str) -> AsyncGenerator[str, None]:
         """Generate code using streaming API"""
+        if not GROQ_AVAILABLE:
+            print("Error: groq package not available. Please install dependencies.")
+            return
+            
         client = self._get_client()
         if not client:
-            logger.error("Groq client not initialized. Please set GROQ_API_KEY environment variable.")
+            print("Groq client not initialized. Please set GROQ_API_KEY environment variable.")
             return
         
         prompt = self.create_prompt(prefix, suffix)
@@ -88,7 +120,7 @@ class AICodeCompletion:
             
             for chunk in stream:
                 if self.is_aborted:
-                    logger.info("Code generation aborted")
+                    print("Code generation aborted")
                     break
                 
                 if chunk.choices[0].delta.content:
@@ -99,13 +131,17 @@ class AICodeCompletion:
                         yield stripped_content
                         
         except Exception as e:
-            logger.error(f"Error during code generation: {e}")
+            print(f"Error during code generation: {e}")
     
     async def generate_code(self, prefix: str, suffix: str) -> str:
         """Generate complete code (non-streaming)"""
+        if not GROQ_AVAILABLE:
+            print("Error: groq package not available. Please install dependencies.")
+            return ""
+            
         client = self._get_client()
         if not client:
-            logger.error("Groq client not initialized. Please set GROQ_API_KEY environment variable.")
+            print("Groq client not initialized. Please set GROQ_API_KEY environment variable.")
             return ""
         
         prompt = self.create_prompt(prefix, suffix)
@@ -128,13 +164,13 @@ class AICodeCompletion:
             return content.replace("<EOT>", "").rstrip() if content else ""
                 
         except Exception as e:
-            logger.error(f"Error during code generation: {e}")
+            print(f"Error during code generation: {e}")
             return ""
     
     def abort_generation(self):
         """Abort current generation"""
         self.is_aborted = True
-        logger.info("Code generation aborted")
+        print("Code generation aborted")
     
     def reset_state(self):
         """Reset generation state"""
@@ -143,9 +179,13 @@ class AICodeCompletion:
     
     async def generate_code_with_prompt(self, prompt: str) -> str:
         """Generate code using a custom prompt"""
+        if not GROQ_AVAILABLE:
+            print("Error: groq package not available. Please install dependencies.")
+            return ""
+            
         client = self._get_client()
         if not client:
-            logger.error("Groq client not initialized. Please set GROQ_API_KEY environment variable.")
+            print("Groq client not initialized. Please set GROQ_API_KEY environment variable.")
             return ""
 
         try:
@@ -166,7 +206,7 @@ class AICodeCompletion:
             return content.replace("<EOT>", "").rstrip() if content else ""
 
         except Exception as e:
-            logger.error(f"Error during code generation: {e}")
+            print(f"Error during code generation: {e}")
             return ""
 
 
