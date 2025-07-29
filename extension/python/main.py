@@ -11,7 +11,12 @@ from pathlib import Path
 # Add the local_ai_code_completion package to the path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from local_ai_code_completion import config, logger, setup, ai_completion
+try:
+    from local_ai_code_completion import config, logger, setup, ai_completion
+except ImportError as e:
+    print(f"Error: Missing dependencies. Please install required packages: {e}")
+    print("The extension will attempt to install dependencies automatically.")
+    sys.exit(1)
 
 
 def main():

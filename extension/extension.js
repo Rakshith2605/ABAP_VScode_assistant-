@@ -256,6 +256,10 @@ async function generateFromCommentCode() {
 
 async function setupGroqAPI() {
     try {
+        // First, install dependencies
+        const pythonPath = getPythonPath();
+        await checkAndInstallDependencies(pythonPath);
+        
         const apiKey = await vscode.window.showInputBox({
             prompt: 'Enter your Groq API key',
             password: true,
@@ -354,6 +358,11 @@ async function callPythonBackend(command, args = {}) {
             await checkAndInstallDependencies(pythonPath);
         } catch (error) {
             console.warn(`Warning: Could not install dependencies: ${error.message}`);
+            // Show user-friendly message
+            vscode.window.showWarningMessage(
+                'ABAP Code Assistant: Python dependencies not installed. ' +
+                'Please run "ABAP Code Assistant: Setup Groq API" to install dependencies.'
+            );
         }
         
         const processArgs = [scriptPath, command];
@@ -415,11 +424,11 @@ async function callPythonBackend(command, args = {}) {
 
 async function checkAndInstallDependencies(pythonPath) {
     return new Promise((resolve, reject) => {
-        const setupScript = path.join(__dirname, 'python', 'setup.py');
+        const checkScript = path.join(__dirname, 'python', 'check_dependencies.py');
         
         console.log(`Checking Python dependencies...`);
         
-        const child = spawn(pythonPath, [setupScript], {
+        const child = spawn(pythonPath, [checkScript], {
             cwd: path.join(__dirname, 'python')
         });
         
