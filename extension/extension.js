@@ -427,9 +427,12 @@ async function checkAndInstallDependencies(pythonPath) {
         const checkScript = path.join(__dirname, 'python', 'check_dependencies.py');
         
         console.log(`Checking Python dependencies...`);
+        console.log(`Python path: ${pythonPath}`);
+        console.log(`Check script: ${checkScript}`);
         
         const child = spawn(pythonPath, [checkScript], {
-            cwd: path.join(__dirname, 'python')
+            cwd: path.join(__dirname, 'python'),
+            env: { ...process.env, PYTHONPATH: path.join(__dirname, 'python') }
         });
         
         let stdout = '';
@@ -437,25 +440,35 @@ async function checkAndInstallDependencies(pythonPath) {
         
         child.stdout.on('data', (data) => {
             stdout += data.toString();
+            console.log(`Dependency check: ${data.toString().trim()}`);
         });
         
         child.stderr.on('data', (data) => {
             stderr += data.toString();
+            console.log(`Dependency check error: ${data.toString().trim()}`);
         });
         
         child.on('close', (code) => {
+            console.log(`Dependency check process exited with code: ${code}`);
             if (code === 0) {
                 console.log(`✅ Dependencies check successful`);
                 resolve();
             } else {
-                console.warn(`⚠️ Dependencies check failed: ${stderr}`);
-                resolve(); // Don't fail the main operation
+                console.warn(`⚠️ Dependencies check failed (code ${code}): ${stderr}`);
+                // Don't fail the main operation, but show a warning
+                vscode.window.showWarningMessage(
+                    'ABAP Code Assistant: Some dependencies may not be installed. ' +
+                    'Please run "ABAP Code Assistant: Setup Groq API" to install dependencies.'
+                );
+                resolve();
             }
         });
         
         child.on('error', (error) => {
             console.warn(`⚠️ Could not check dependencies: ${error.message}`);
-            resolve(); // Don't fail the main operation
+            console.warn(`Error details: ${JSON.stringify(error, null, 2)}`);
+            // Don't fail the main operation
+            resolve();
         });
     });
 }
@@ -475,10 +488,13 @@ function getPythonPath() {
     let defaultPath = 'python3';
     
     if (platform === 'win32') {
+        // Windows: try python first, then python3
         defaultPath = 'python';
     } else if (platform === 'darwin') {
+        // macOS: try python3 first, then python
         defaultPath = 'python3';
     } else {
+        // Linux: try python3 first, then python
         defaultPath = 'python3';
     }
     
