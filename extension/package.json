@@ -2,7 +2,7 @@
   "name": "abap-code-assistant",
   "displayName": "ABAP Code Assistant",
   "description": "AI-powered ABAP code assistant with code generation and debugging using Groq API",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.60.0"
   },
@@ -21,7 +21,7 @@
     "type": "git",
     "url": "https://github.com/Rakshith2605/ABAP_VScode_assistant-.git"
   },
-    "license": "MIT",
+  "license": "MIT",
   "publisher": "dharmappar",
   "activationEvents": [
     "onCommand:abap-code-assistant.generateCode",
@@ -85,8 +85,15 @@
     "languages": [
       {
         "id": "abap",
-        "aliases": ["ABAP", "SAP ABAP"],
-        "extensions": [".abap", ".sap", ".sapabap"],
+        "aliases": [
+          "ABAP",
+          "SAP ABAP"
+        ],
+        "extensions": [
+          ".abap",
+          ".sap",
+          ".sapabap"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -113,21 +120,27 @@
         "abapAiCodeCompletion.temperature": {
           "type": "number",
           "default": 0.3,
-          "minimum": 0.0,
-          "maximum": 2.0,
+          "minimum": 0,
+          "maximum": 2,
           "description": "Temperature for code generation (0.0-2.0)"
         },
         "abapAiCodeCompletion.topP": {
           "type": "number",
           "default": 0.3,
-          "minimum": 0.0,
-          "maximum": 1.0,
+          "minimum": 0,
+          "maximum": 1,
           "description": "Top-p for code generation (0.0-1.0)"
         },
         "abapAiCodeCompletion.sapSystem": {
           "type": "string",
           "default": "S4HANA",
-          "enum": ["S4HANA", "ECC", "BW", "CRM", "SRM"],
+          "enum": [
+            "S4HANA",
+            "ECC",
+            "BW",
+            "CRM",
+            "SRM"
+          ],
           "description": "SAP System version"
         },
         "abapAiCodeCompletion.debugMode": {
@@ -146,4 +159,4 @@
     "@types/node": "^16.0.0",
     "vscode-test": "^1.6.1"
   }
-} 
+}

@@ -341,12 +341,20 @@ async function debugApiKey() {
 }
 
 async function callPythonBackend(command, args = {}) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const pythonPath = getPythonPath();
         const scriptPath = path.join(__dirname, 'python', 'main.py');
         
         console.log(`Calling Python backend: ${pythonPath} ${scriptPath} ${command}`);
         console.log(`Working directory: ${path.join(__dirname, 'python')}`);
+        console.log(`Extension directory: ${__dirname}`);
+        
+        // Check if Python dependencies are installed
+        try {
+            await checkAndInstallDependencies(pythonPath);
+        } catch (error) {
+            console.warn(`Warning: Could not install dependencies: ${error.message}`);
+        }
         
         const processArgs = [scriptPath, command];
         
@@ -385,16 +393,60 @@ async function callPythonBackend(command, args = {}) {
 
         child.on('close', (code) => {
             console.log(`Python process exited with code: ${code}`);
+            console.log(`Python stdout: ${stdout}`);
+            console.log(`Python stderr: ${stderr}`);
+            
             if (code === 0) {
                 resolve(stdout.trim());
             } else {
-                reject(new Error(`Python process failed (code ${code}): ${stderr}`));
+                const errorMsg = stderr || `Process failed with code ${code}`;
+                console.error(`Python backend error: ${errorMsg}`);
+                reject(new Error(`Python process failed (code ${code}): ${errorMsg}`));
             }
         });
 
         child.on('error', (error) => {
             console.error(`Python process error: ${error.message}`);
+            console.error(`Error details: ${JSON.stringify(error, null, 2)}`);
             reject(new Error(`Failed to start Python process: ${error.message}`));
+        });
+    });
+}
+
+async function checkAndInstallDependencies(pythonPath) {
+    return new Promise((resolve, reject) => {
+        const setupScript = path.join(__dirname, 'python', 'setup.py');
+        
+        console.log(`Checking Python dependencies...`);
+        
+        const child = spawn(pythonPath, [setupScript], {
+            cwd: path.join(__dirname, 'python')
+        });
+        
+        let stdout = '';
+        let stderr = '';
+        
+        child.stdout.on('data', (data) => {
+            stdout += data.toString();
+        });
+        
+        child.stderr.on('data', (data) => {
+            stderr += data.toString();
+        });
+        
+        child.on('close', (code) => {
+            if (code === 0) {
+                console.log(`✅ Dependencies check successful`);
+                resolve();
+            } else {
+                console.warn(`⚠️ Dependencies check failed: ${stderr}`);
+                resolve(); // Don't fail the main operation
+            }
+        });
+        
+        child.on('error', (error) => {
+            console.warn(`⚠️ Could not check dependencies: ${error.message}`);
+            resolve(); // Don't fail the main operation
         });
     });
 }
@@ -409,20 +461,19 @@ function getPythonPath() {
         return pythonPath;
     }
     
-    // Try common Python paths
-    const commonPaths = [
-        'python3',
-        'python',
-        '/usr/bin/python3',
-        '/usr/bin/python',
-        '/opt/anaconda3/bin/python',
-        '/opt/homebrew/bin/python3',
-        '/opt/homebrew/bin/python'
-    ];
+    // Try common Python paths based on platform
+    const platform = process.platform;
+    let defaultPath = 'python3';
     
-    // For now, return python3 as it's most common on macOS
-    const defaultPath = 'python3';
-    console.log(`Using default Python path: ${defaultPath}`);
+    if (platform === 'win32') {
+        defaultPath = 'python';
+    } else if (platform === 'darwin') {
+        defaultPath = 'python3';
+    } else {
+        defaultPath = 'python3';
+    }
+    
+    console.log(`Using default Python path for ${platform}: ${defaultPath}`);
     return defaultPath;
 }
 
