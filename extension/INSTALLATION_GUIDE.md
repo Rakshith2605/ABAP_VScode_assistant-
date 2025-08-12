@@ -73,7 +73,7 @@ You can also set these in your VS Code settings:
 ```json
 {
   "abap-code-assistant.groqApiKey": "your_api_key_here",
-  "abap-code-assistant.modelName": "qwen/qwen3-32b",
+  "abap-code-assistant.modelName": "llama-3.3-70b-versatile",
   "abap-code-assistant.temperature": 0.3
 }
 ```

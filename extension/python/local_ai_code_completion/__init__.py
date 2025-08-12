@@ -26,7 +26,7 @@ except ImportError as e:
     class PlaceholderConfig:
         def __init__(self):
             self.model = type('obj', (object,), {
-                'name': 'qwen/qwen3-32b',
+                'name': 'llama-3.3-70b-versatile',
                 'temperature': 0.3,
                 'top_p': 0.3,
                 'timeout': 15000,

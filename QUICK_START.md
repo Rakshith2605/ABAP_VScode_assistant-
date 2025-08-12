@@ -79,7 +79,7 @@ nano .env  # or use your preferred editor
 - `GROQ_BASE_URL`: Groq API endpoint (default: https://api.groq.com)
 
 **Optional Environment Variables:**
-- `LACC_MODEL_NAME`: AI model to use (default: qwen/qwen3-32b)
+- `LACC_MODEL_NAME`: AI model to use (default: llama-3.3-70b-versatile)
 - `LACC_TEMPERATURE`: Generation randomness (default: 0.3)
 - `LACC_TOP_P`: Nucleus sampling (default: 0.3)
 

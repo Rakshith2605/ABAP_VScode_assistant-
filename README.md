@@ -200,7 +200,7 @@ The build process creates:
 ```json
 {
   "abapCodeAssistant.groqApiKey": "your_groq_api_key_here",
-  "abapCodeAssistant.model": "qwen/qwen3-32b",
+  "abapCodeAssistant.model": "llama-3.3-70b-versatile",
   "abapCodeAssistant.temperature": 0.3,
   "abapCodeAssistant.topP": 0.3
 }
@@ -213,7 +213,7 @@ The build process creates:
 GROQ_API_KEY=your_groq_api_key_here
 
 # Optional
-LACC_MODEL_NAME=qwen/qwen3-32b
+LACC_MODEL_NAME=llama-3.3-70b-versatile
 LACC_TEMPERATURE=0.3
 LACC_TOP_P=0.3
 LACC_TIMEOUT=15000

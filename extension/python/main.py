@@ -277,7 +277,7 @@ def handle_config():
         else:
             # Fallback configuration
             config_data = {
-                "model": "qwen/qwen3-32b",
+                "model": "llama-3.3-70b-versatile",
                 "temperature": 0.3,
                 "top_p": 0.3,
                 "timeout": 15000,

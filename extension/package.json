@@ -119,7 +119,7 @@
         },
         "abapCodeAssistant.model": {
           "type": "string",
-          "default": "qwen/qwen3-32b",
+          "default": "llama-3.3-70b-versatile",
           "description": "Groq model to use for code generation"
         },
         "abapAiCodeCompletion.temperature": {

@@ -12,7 +12,7 @@ load_dotenv()
 
 class ModelConfig(BaseModel):
     """Configuration for the AI model"""
-    name: str = Field(default="qwen/qwen3-32b", description="Groq model name to use")
+    name: str = Field(default="llama-3.3-70b-versatile", description="Groq model name to use")
     temperature: float = Field(default=0.3, ge=0, le=2, description="Temperature for generation")
     top_p: float = Field(default=0.3, ge=0, le=1, description="Top-p for generation")
     timeout: int = Field(default=15000, description="Timeout in milliseconds")

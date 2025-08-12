@@ -88,7 +88,7 @@ GROQ_API_KEY=your_groq_api_key_here
 GROQ_BASE_URL=https://api.groq.com
 
 # Model Configuration
-LACC_MODEL_NAME=qwen/qwen3-32b
+LACC_MODEL_NAME=llama-3.3-70b-versatile
 LACC_TEMPERATURE=0.3
 LACC_TOP_P=0.3
 LACC_TIMEOUT=15000
