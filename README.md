@@ -3,7 +3,7 @@
 A VS Code extension that provides AI-powered ABAP code completion and debugging using the Groq API.
 ## Demo
 
-![ABAP Code Assistant Demo](extension/asset/abap_vid.gif)
+![ABAP Code Assistant Demo](extension/assets/abap_vid.gif)
 
 *Watch the ABAP Code Assistant in action - generating code from comments seamlessly!*
 ## Features
