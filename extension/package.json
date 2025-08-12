@@ -63,6 +63,11 @@
         "command": "abap-code-assistant.debug",
         "title": "ABAP Code Assistant: Debug API Key",
         "category": "ABAP Code Assistant"
+      },
+      {
+        "command": "abap-code-assistant.diagnose",
+        "title": "ABAP Code Assistant: Diagnose Extension",
+        "category": "ABAP Code Assistant"
       }
     ],
     "keybindings": [

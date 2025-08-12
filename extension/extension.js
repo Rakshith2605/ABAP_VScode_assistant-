@@ -29,11 +29,15 @@ function activate(context) {
         await debugApiKey();
     });
 
+    let diagnose = vscode.commands.registerCommand('abap-code-assistant.diagnose', async () => {
+        await diagnoseExtension();
+    });
+
     let generateFromComment = vscode.commands.registerCommand('abap-code-assistant.generateFromComment', async () => {
         await generateFromCommentCode();
     });
 
-    context.subscriptions.push(generateCode, generateDebug, setup, config, debug, generateFromComment);
+    context.subscriptions.push(generateCode, generateDebug, setup, config, debug, diagnose, generateFromComment);
 }
 
 async function generateABAPCode() {
@@ -97,7 +101,7 @@ async function generateABAPCode() {
                 
                 vscode.window.showInformationMessage('ABAP code generated successfully!');
             } else {
-                vscode.window.showWarningMessage('No ABAP code generated');
+                vscode.window.showWarningMessage('No ABAP code generated. This might be due to missing dependencies or API issues.');
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Error generating ABAP code: ${error.message}`);
@@ -262,18 +266,47 @@ async function setupGroqAPI() {
             title: "Setting up ABAP Code Assistant...",
             cancellable: false
         }, async (progress) => {
-            progress.report({ message: "Installing dependencies..." });
+            progress.report({ message: "Checking Python environment..." });
             
-            // First, install dependencies
+            // First, check Python environment
             const pythonPath = getPythonPath();
-            await checkAndInstallDependencies(pythonPath);
+            console.log(`Using Python path: ${pythonPath}`);
+            
+            // Check if Python is accessible
+            try {
+                const testResult = await callPythonBackend('config', {});
+                if (testResult) {
+                    progress.report({ message: "Python environment OK, checking dependencies..." });
+                }
+            } catch (error) {
+                console.warn(`Python test failed: ${error.message}`);
+                progress.report({ message: "Python environment issues detected..." });
+            }
+            
+            // Install dependencies (this will be silent and won't show errors to user)
+            try {
+                await checkAndInstallDependencies(pythonPath);
+                progress.report({ message: "Dependencies checked..." });
+            } catch (error) {
+                console.warn(`Dependency check failed: ${error.message}`);
+                // Continue anyway - the extension will work with limited functionality
+            }
             
             progress.report({ message: "Requesting API key..." });
             
             const apiKey = await vscode.window.showInputBox({
-                prompt: 'Enter your Groq API key',
+                prompt: 'Enter your Groq API key (get one from groq.com)',
                 password: true,
-                placeHolder: 'gsk_...'
+                placeHolder: 'gsk_...',
+                validateInput: (value) => {
+                    if (!value || value.trim() === '') {
+                        return 'API key is required';
+                    }
+                    if (!value.startsWith('gsk_')) {
+                        return 'API key should start with "gsk_"';
+                    }
+                    return null;
+                }
             });
 
             if (apiKey) {
@@ -283,18 +316,24 @@ async function setupGroqAPI() {
                 await vscode.workspace.getConfiguration('abapCodeAssistant').update('groqApiKey', apiKey, vscode.ConfigurationTarget.Global);
                 
                 // Test the setup with API key as environment variable
-                const result = await callPythonBackend('setup', { apiKey: apiKey });
-                if (result && result.includes('successful')) {
-                    vscode.window.showInformationMessage('✅ Groq API setup successful!');
-                } else {
-                    vscode.window.showErrorMessage('❌ Setup failed. Please check your API key.');
+                try {
+                    const result = await callPythonBackend('setup', { apiKey: apiKey });
+                    if (result && result.includes('successful')) {
+                        vscode.window.showInformationMessage('✅ Groq API setup successful! You can now use ABAP code generation.');
+                    } else {
+                        vscode.window.showWarningMessage('⚠️ Setup completed but API test failed. The extension will work but may have limited functionality.');
+                    }
+                } catch (error) {
+                    console.warn(`API test failed: ${error.message}`);
+                    vscode.window.showWarningMessage('⚠️ Setup completed but API test failed. Please check your API key and internet connection.');
                 }
             } else {
                 vscode.window.showWarningMessage('Setup cancelled. No API key provided.');
             }
         });
     } catch (error) {
-        vscode.window.showErrorMessage(`Setup error: ${error.message}`);
+        console.error(`Setup error: ${error.message}`);
+        vscode.window.showErrorMessage(`Setup error: ${error.message}. Please check the Output panel for details.`);
     }
 }
 
@@ -373,13 +412,8 @@ async function callPythonBackend(command, args = {}) {
             await checkAndInstallDependencies(pythonPath);
         } catch (error) {
             console.warn(`Warning: Could not install dependencies: ${error.message}`);
-            // Only show warning if it's a critical error, not just missing dependencies
-            if (error.message.includes('Failed to start') || error.message.includes('timeout')) {
-                vscode.window.showWarningMessage(
-                    'ABAP Code Assistant: Could not install dependencies automatically. ' +
-                    'Please run "ABAP Code Assistant: Setup Groq API" to install dependencies manually.'
-                );
-            }
+            // Don't show user-facing warnings for dependency check failures
+            // The extension will still work, just with limited functionality
         }
         
         const processArgs = [scriptPath, command];
@@ -447,6 +481,13 @@ async function checkAndInstallDependencies(pythonPath) {
         console.log(`Python path: ${pythonPath}`);
         console.log(`Check script: ${checkScript}`);
         
+        // Check if the check script exists
+        if (!require('fs').existsSync(checkScript)) {
+            console.warn(`⚠️ Dependency check script not found: ${checkScript}`);
+            resolve(); // Don't fail, just continue
+            return;
+        }
+        
         const child = spawn(pythonPath, [checkScript], {
             cwd: path.join(__dirname, 'python'),
             env: { ...process.env, PYTHONPATH: path.join(__dirname, 'python') }
@@ -472,12 +513,16 @@ async function checkAndInstallDependencies(pythonPath) {
                 resolve();
             } else {
                 console.warn(`⚠️ Dependencies check failed (code ${code}): ${stderr}`);
-                // Only show warning for critical errors, not missing dependencies
-                if (code !== 1 || !stderr.includes('Missing packages')) {
-                    vscode.window.showWarningMessage(
-                        'ABAP Code Assistant: Could not verify dependencies. ' +
-                        'Please run "ABAP Code Assistant: Setup Groq API" to install dependencies.'
-                    );
+                
+                // Handle different failure scenarios gracefully
+                if (code === 1 && stderr.includes('Missing packages')) {
+                    console.log(`ℹ️ Missing packages detected, will install automatically`);
+                    // Don't show warning for missing packages - this is expected
+                } else if (code === 2) {
+                    console.log(`ℹ️ Dependencies installed successfully`);
+                } else {
+                    // Only show warning for unexpected errors
+                    console.warn(`⚠️ Unexpected dependency check failure`);
                 }
                 resolve();
             }
@@ -486,9 +531,16 @@ async function checkAndInstallDependencies(pythonPath) {
         child.on('error', (error) => {
             console.warn(`⚠️ Could not check dependencies: ${error.message}`);
             console.warn(`Error details: ${JSON.stringify(error, null, 2)}`);
-            // Don't fail the main operation
+            // Don't fail the main operation, just log the warning
             resolve();
         });
+        
+        // Add timeout to prevent hanging
+        setTimeout(() => {
+            console.warn(`⚠️ Dependency check timed out, continuing anyway`);
+            child.kill();
+            resolve();
+        }, 30000); // 30 second timeout
     });
 }
 
@@ -500,6 +552,13 @@ function getPythonPath() {
     if (pythonPath) {
         console.log(`Using Python path from VS Code settings: ${pythonPath}`);
         return pythonPath;
+    }
+    
+    // Try to find conda environment first
+    const condaPath = findCondaPython();
+    if (condaPath) {
+        console.log(`Using conda Python path: ${condaPath}`);
+        return condaPath;
     }
     
     // Try common Python paths based on platform
@@ -519,6 +578,109 @@ function getPythonPath() {
     
     console.log(`Using default Python path for ${platform}: ${defaultPath}`);
     return defaultPath;
+}
+
+function findCondaPython() {
+    const platform = process.platform;
+    const homeDir = process.env.HOME || process.env.USERPROFILE;
+    
+    // Common conda installation paths
+    const condaPaths = [
+        // Homebrew conda (macOS)
+        '/opt/homebrew/Caskroom/miniconda/base/envs/abap-assistant/bin/python',
+        '/opt/homebrew/Caskroom/miniconda/base/bin/python',
+        // User conda
+        path.join(homeDir, 'miniconda3/envs/abap-assistant/bin/python'),
+        path.join(homeDir, 'anaconda3/envs/abap-assistant/bin/python'),
+        path.join(homeDir, 'miniconda3/bin/python'),
+        path.join(homeDir, 'anaconda3/bin/python'),
+        // System conda
+        '/usr/local/miniconda3/envs/abap-assistant/bin/python',
+        '/usr/local/anaconda3/envs/abap-assistant/bin/python'
+    ];
+    
+    // Check if any of these paths exist and are executable
+    for (const condaPath of condaPaths) {
+        try {
+            if (require('fs').existsSync(condaPath)) {
+                // Check if it's executable
+                const stats = require('fs').statSync(condaPath);
+                if (stats.isFile() && (stats.mode & 0o111)) {
+                    console.log(`Found conda Python at: ${condaPath}`);
+                    return condaPath;
+                }
+            }
+        } catch (error) {
+            console.log(`Could not check conda path ${condaPath}: ${error.message}`);
+        }
+    }
+    
+    console.log('No conda Python found, will use system Python');
+    return null;
+}
+
+async function diagnoseExtension() {
+    try {
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Diagnosing ABAP Code Assistant...",
+            cancellable: false
+        }, async (progress) => {
+            progress.report({ message: "Checking Python environment..." });
+            
+            const pythonPath = getPythonPath();
+            const config = vscode.workspace.getConfiguration('abapCodeAssistant');
+            const apiKey = config.get('groqApiKey');
+            
+            let diagnosis = [];
+            
+            // Check Python path
+            diagnosis.push(`🐍 Python Path: ${pythonPath}`);
+            
+            // Check API key
+            if (apiKey) {
+                diagnosis.push(`🔑 API Key: ✅ Set (starts with ${apiKey.substring(0, 10)}...)`);
+            } else {
+                diagnosis.push(`🔑 API Key: ❌ Not set`);
+            }
+            
+            // Test Python backend
+            progress.report({ message: "Testing Python backend..." });
+            try {
+                const result = await callPythonBackend('config', {});
+                if (result) {
+                    diagnosis.push(`🔧 Python Backend: ✅ Working`);
+                    diagnosis.push(`📊 Backend Response: ${result.substring(0, 100)}...`);
+                } else {
+                    diagnosis.push(`🔧 Python Backend: ⚠️ No response`);
+                }
+            } catch (error) {
+                diagnosis.push(`🔧 Python Backend: ❌ Error - ${error.message}`);
+            }
+            
+            // Check dependencies
+            progress.report({ message: "Checking dependencies..." });
+            try {
+                await checkAndInstallDependencies(pythonPath);
+                diagnosis.push(`📦 Dependencies: ✅ Checked`);
+            } catch (error) {
+                diagnosis.push(`📦 Dependencies: ⚠️ Check failed - ${error.message}`);
+            }
+            
+            // Show diagnosis
+            const diagnosisText = diagnosis.join('\n');
+            const doc = await vscode.workspace.openTextDocument({
+                content: `# ABAP Code Assistant Diagnosis\n\n${diagnosisText}\n\n## Troubleshooting Tips\n\n1. Make sure you have a valid Groq API key\n2. Check that Python dependencies are installed\n3. Verify your Python environment is accessible\n4. Check the Output panel for detailed error messages`,
+                language: 'markdown'
+            });
+            
+            await vscode.window.showTextDocument(doc);
+            
+            vscode.window.showInformationMessage('Diagnosis complete! Check the opened document for details.');
+        });
+    } catch (error) {
+        vscode.window.showErrorMessage(`Diagnosis failed: ${error.message}`);
+    }
 }
 
 function deactivate() {

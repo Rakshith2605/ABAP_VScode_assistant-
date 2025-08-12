@@ -6,6 +6,7 @@ import sys
 import subprocess
 import os
 import platform
+import shutil
 
 def get_pip_command():
     """Get the appropriate pip command for the platform"""
@@ -28,6 +29,23 @@ def get_pip_command():
     
     # Fallback to sys.executable -m pip
     return [sys.executable, "-m", "pip"]
+
+def check_conda_environment():
+    """Check if we're in a conda environment and if it has the right packages"""
+    conda_env = os.environ.get('CONDA_DEFAULT_ENV')
+    if conda_env:
+        print(f"✅ Running in conda environment: {conda_env}")
+        
+        # Check if this is our abap-assistant environment
+        if conda_env == 'abap-assistant':
+            print("✅ Using dedicated abap-assistant conda environment")
+            return True
+        else:
+            print(f"⚠️  Using conda environment '{conda_env}', but 'abap-assistant' is recommended")
+            return False
+    else:
+        print("ℹ️  Not running in conda environment")
+        return False
 
 def install_dependencies():
     """Install required dependencies"""
@@ -80,6 +98,9 @@ def check_dependencies():
     print(f"Platform: {platform.platform()}")
     print(f"Python executable: {sys.executable}")
     
+    # Check conda environment
+    in_conda = check_conda_environment()
+    
     for package in required_packages:
         try:
             __import__(package.replace('-', '_'))
@@ -90,11 +111,42 @@ def check_dependencies():
     
     if missing_packages:
         print(f"\nMissing packages: {', '.join(missing_packages)}")
-        return install_dependencies()
+        
+        if in_conda:
+            print("ℹ️  You're in a conda environment. Consider activating 'abap-assistant':")
+            print("   conda activate abap-assistant")
+            print("   pip install -r requirements.txt")
+        
+        print("Attempting to install missing packages...")
+        if install_dependencies():
+            print("✅ Dependencies installed successfully")
+            return True
+        else:
+            print("❌ Failed to install dependencies")
+            print("\n💡 Manual installation options:")
+            print("1. Activate conda environment: conda activate abap-assistant")
+            print("2. Install from requirements: pip install -r requirements.txt")
+            print("3. Run setup script: python setup.py")
+            return False
     else:
         print("✅ All dependencies are already installed!")
         return True
 
+def main():
+    """Main function with better error handling"""
+    try:
+        success = check_dependencies()
+        if success:
+            print("\n🎉 All dependencies are ready!")
+            sys.exit(0)
+        else:
+            print("\n⚠️  Some dependencies are missing or failed to install")
+            print("The extension will still work but with limited functionality")
+            sys.exit(1)
+    except Exception as e:
+        print(f"\n❌ Unexpected error during dependency check: {e}")
+        print("The extension will continue with limited functionality")
+        sys.exit(1)
+
 if __name__ == "__main__":
-    success = check_dependencies()
-    sys.exit(0 if success else 1) 
+    main() 

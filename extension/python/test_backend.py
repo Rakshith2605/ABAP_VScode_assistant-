@@ -64,8 +64,11 @@ def test_config_command():
     print("\nTesting config command...")
     
     try:
+        # Get the path to main.py in the current directory
+        main_py_path = os.path.join(os.path.dirname(__file__), "main.py")
+        
         result = subprocess.run([
-            sys.executable, "main.py", "config"
+            sys.executable, main_py_path, "config"
         ], capture_output=True, text=True, timeout=30)
         
         if result.returncode == 0:
