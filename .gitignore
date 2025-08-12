@@ -149,7 +149,6 @@ completed_*.py
 Thumbs.db
 
 # Extension specific files
-extension/*.vsix
 extension/node_modules/
 extension/out/
 extension/dist/
