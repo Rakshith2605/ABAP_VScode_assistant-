@@ -1,8 +1,8 @@
 {
   "name": "abap-code-assistant",
   "displayName": "ABAP Code Assistant",
-  "description": "AI-powered ABAP code assistant with code generation and debugging using Groq API",
-  "version": "1.0.7",
+  "description": "AI-powered ABAP code assistant with code generation and debugging using Groq API and Llama 3.3 70B Versatile model",
+  "version": "1.0.10",
   "engines": {
     "vscode": "^1.60.0"
   },
@@ -67,6 +67,16 @@
       {
         "command": "abap-code-assistant.diagnose",
         "title": "ABAP Code Assistant: Diagnose Extension",
+        "category": "ABAP Code Assistant"
+      },
+      {
+        "command": "abap-code-assistant.installDependencies",
+        "title": "ABAP Code Assistant: Install Dependencies",
+        "category": "ABAP Code Assistant"
+      },
+      {
+        "command": "abap-code-assistant.checkEnvironment",
+        "title": "ABAP Code Assistant: Check Environment",
         "category": "ABAP Code Assistant"
       }
     ],

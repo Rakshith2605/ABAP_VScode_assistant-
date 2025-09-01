@@ -192,6 +192,8 @@ The build process creates:
 | `ABAP Code Assistant: Show Configuration` | Display current settings | - |
 | `ABAP Code Assistant: Debug API Key` | Test API connectivity | - |
 | `ABAP Code Assistant: Diagnose Extension` | Run comprehensive diagnostics | - |
+| `ABAP Code Assistant: Install Dependencies` | Install Python dependencies | - |
+| `ABAP Code Assistant: Check Environment` | Check Python environment | - |
 
 ### Configuration
 
@@ -238,6 +240,67 @@ export LACC_PREFIX="DATA: lv_name TYPE string."
 export LACC_SUFFIX="WRITE: lv_name."
 python extension/python/main.py generate
 ```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 1. "Setup completed but API test failed" Error
+This usually means Python dependencies are missing. Try these steps:
+
+1. **Run the diagnostic command**: `ABAP Code Assistant: Diagnose Extension`
+2. **Install dependencies manually**: `ABAP Code Assistant: Install Dependencies`
+3. **Check Python installation**: Make sure Python 3.11+ is installed and accessible
+
+#### 2. "No ABAP code generated" Error
+This can happen when:
+- Python dependencies are missing
+- API key is invalid
+- Network connectivity issues
+
+**Solutions**:
+1. Run `ABAP Code Assistant: Install Dependencies`
+2. Verify your Groq API key is correct
+3. Check your internet connection
+4. Run `ABAP Code Assistant: Debug API Key` to test connectivity
+
+#### 3. Python Environment Issues
+If you're having Python-related problems:
+
+```bash
+# Check Python version
+python --version
+
+# Install dependencies manually
+cd extension/python
+pip install -r requirements.txt
+
+# Or use the setup script
+python setup.py
+```
+
+#### 4. Extension Commands Not Working
+Try these commands in order:
+1. `ABAP Code Assistant: Check Environment` - Check Python environment first
+2. `ABAP Code Assistant: Setup Groq API` - Configure API key
+3. `ABAP Code Assistant: Install Dependencies` - Install Python packages
+4. `ABAP Code Assistant: Diagnose Extension` - Check for issues
+5. `ABAP Code Assistant: Debug API Key` - Test API connectivity
+
+#### 5. Deployment Issues (Different Machines)
+If the extension works on your machine but fails on others:
+
+1. **Run Environment Check**: `ABAP Code Assistant: Check Environment`
+2. **Check Python Version**: Ensure Python 3.8+ is installed
+3. **Install Dependencies**: `ABAP Code Assistant: Install Dependencies`
+4. **Check Permissions**: Run VS Code as administrator if needed
+5. **Network Issues**: Ensure firewall allows access to groq.com
+6. **Manual Installation**: If auto-install fails, run manually:
+   ```bash
+   cd extension/python
+   python env_check.py
+   pip install --user -r requirements.txt
+   ```
 
 ### Backend Commands
 

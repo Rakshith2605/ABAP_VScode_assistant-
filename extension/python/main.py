@@ -46,8 +46,11 @@ def main():
             handle_setup()
         elif command == "config":
             handle_config()
+        elif command == "env_check":
+            handle_env_check()
         else:
             print(f"Unknown command: {command}")
+            print("Available commands: generate, setup, config, env_check")
             sys.exit(1)
     except Exception as e:
         logger.error(f"Error in command '{command}': {e}")
@@ -294,6 +297,19 @@ def handle_config():
         print(f"Config error: {e}")
         print("Please check your setup and try again.")
         sys.exit(1)
+
+def handle_env_check():
+    """Handle environment check command"""
+    try:
+        # Import and run the environment checker
+        import env_check
+        env_check.main()
+    except ImportError:
+        print("Environment checker not available")
+        print("Please check that env_check.py exists in the python directory")
+    except Exception as e:
+        print(f"Environment check error: {e}")
+        print("Please check your Python installation")
 
 
 if __name__ == "__main__":

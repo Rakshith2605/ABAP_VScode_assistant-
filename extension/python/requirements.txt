@@ -1,0 +1,17 @@
+# ABAP Code Assistant Dependencies
+# Flexible version requirements for better deployment compatibility
+
+# Core AI API client
+groq>=0.20.0
+
+# Environment configuration
+python-dotenv>=0.19.0
+
+# Data validation (supports both v1 and v2)
+pydantic>=1.8.0
+
+# HTTP requests (more common than rich, better compatibility)
+requests>=2.25.0
+
+# Optional: Rich terminal output (if available)
+rich>=10.0.0; python_version >= "3.7"

@@ -33,11 +33,19 @@ function activate(context) {
         await diagnoseExtension();
     });
 
+    let installDependencies = vscode.commands.registerCommand('abap-code-assistant.installDependencies', async () => {
+        await installDependenciesManually();
+    });
+
+    let checkEnvironment = vscode.commands.registerCommand('abap-code-assistant.checkEnvironment', async () => {
+        await checkEnvironmentStatus();
+    });
+
     let generateFromComment = vscode.commands.registerCommand('abap-code-assistant.generateFromComment', async () => {
         await generateFromCommentCode();
     });
 
-    context.subscriptions.push(generateCode, generateDebug, setup, config, debug, diagnose, generateFromComment);
+    context.subscriptions.push(generateCode, generateDebug, setup, config, debug, diagnose, installDependencies, checkEnvironment, generateFromComment);
 }
 
 async function generateABAPCode() {
@@ -101,7 +109,7 @@ async function generateABAPCode() {
                 
                 vscode.window.showInformationMessage('ABAP code generated successfully!');
             } else {
-                vscode.window.showWarningMessage('No ABAP code generated. This might be due to missing dependencies or API issues.');
+                vscode.window.showWarningMessage('No ABAP code generated. This might be due to missing dependencies or API issues. Try running "ABAP Code Assistant: Install Dependencies" command.');
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Error generating ABAP code: ${error.message}`);
@@ -170,7 +178,7 @@ async function generateABAPDebugCode() {
                 
                 vscode.window.showInformationMessage('ABAP debug code generated successfully!');
             } else {
-                vscode.window.showWarningMessage('No ABAP debug code generated');
+                vscode.window.showWarningMessage('No ABAP debug code generated. This might be due to missing dependencies or API issues. Try running "ABAP Code Assistant: Install Dependencies" command.');
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Error generating ABAP debug code: ${error.message}`);
@@ -250,7 +258,7 @@ async function generateFromCommentCode() {
                 
                 vscode.window.showInformationMessage('ABAP code generated from comment successfully!');
             } else {
-                vscode.window.showWarningMessage('No ABAP code generated from comment');
+                vscode.window.showWarningMessage('No ABAP code generated from comment. This might be due to missing dependencies or API issues. Try running "ABAP Code Assistant: Install Dependencies" command.');
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Error generating ABAP code from comment: ${error.message}`);
@@ -321,11 +329,28 @@ async function setupGroqAPI() {
                     if (result && result.includes('successful')) {
                         vscode.window.showInformationMessage('✅ Groq API setup successful! You can now use ABAP code generation.');
                     } else {
-                        vscode.window.showWarningMessage('⚠️ Setup completed but API test failed. The extension will work but may have limited functionality.');
+                        // Show more detailed error information
+                        const errorDetails = result || 'Unknown error';
+                        console.warn(`Setup result: ${errorDetails}`);
+                        
+                        // Check if it's a dependency issue
+                        if (errorDetails.includes('groq package not available') || errorDetails.includes('dependencies')) {
+                            vscode.window.showErrorMessage('❌ Setup failed: Python dependencies are missing. Please run the diagnostic command to fix this.');
+                        } else {
+                            vscode.window.showWarningMessage('⚠️ Setup completed but API test failed. Please run the diagnostic command for more details.');
+                        }
                     }
                 } catch (error) {
                     console.warn(`API test failed: ${error.message}`);
-                    vscode.window.showWarningMessage('⚠️ Setup completed but API test failed. Please check your API key and internet connection.');
+                    
+                    // Provide more specific error messages
+                    if (error.message.includes('Python process failed')) {
+                        vscode.window.showErrorMessage('❌ Setup failed: Python backend error. Please run the diagnostic command to troubleshoot.');
+                    } else if (error.message.includes('Failed to start Python process')) {
+                        vscode.window.showErrorMessage('❌ Setup failed: Python not found. Please install Python 3.11+ and run the diagnostic command.');
+                    } else {
+                        vscode.window.showErrorMessage(`❌ Setup failed: ${error.message}. Please run the diagnostic command for more details.`);
+                    }
                 }
             } else {
                 vscode.window.showWarningMessage('Setup cancelled. No API key provided.');
@@ -407,13 +432,12 @@ async function callPythonBackend(command, args = {}) {
         console.log(`Working directory: ${path.join(__dirname, 'python')}`);
         console.log(`Extension directory: ${__dirname}`);
         
-        // Check if Python dependencies are installed (silently)
+        // Check if Python dependencies are installed
         try {
             await checkAndInstallDependencies(pythonPath);
         } catch (error) {
             console.warn(`Warning: Could not install dependencies: ${error.message}`);
-            // Don't show user-facing warnings for dependency check failures
-            // The extension will still work, just with limited functionality
+            // Log the warning but don't show to user yet - let the main operation fail gracefully
         }
         
         const processArgs = [scriptPath, command];
@@ -680,6 +704,94 @@ async function diagnoseExtension() {
         });
     } catch (error) {
         vscode.window.showErrorMessage(`Diagnosis failed: ${error.message}`);
+    }
+}
+
+async function installDependenciesManually() {
+    try {
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Installing Python Dependencies...",
+            cancellable: false
+        }, async (progress) => {
+            progress.report({ message: "Checking Python environment..." });
+            
+            const pythonPath = getPythonPath();
+            if (!pythonPath) {
+                vscode.window.showErrorMessage('❌ Python not found. Please install Python 3.8+ first.');
+                return;
+            }
+            
+            // First run the basic environment check
+            progress.report({ message: "Running environment diagnostics..." });
+            try {
+                const envCheckResult = await callPythonBackend('env_check', {});
+                if (envCheckResult) {
+                    console.log('Environment check completed');
+                }
+            } catch (error) {
+                console.warn(`Environment check failed: ${error.message}`);
+            }
+            
+            progress.report({ message: "Installing dependencies..." });
+            
+            try {
+                await checkAndInstallDependencies(pythonPath);
+                vscode.window.showInformationMessage('✅ Dependencies installed successfully! You can now use the extension.');
+            } catch (error) {
+                console.error(`Dependency installation failed: ${error.message}`);
+                
+                // Provide more specific guidance
+                let errorMessage = `❌ Failed to install dependencies: ${error.message}\n\n`;
+                errorMessage += `💡 Troubleshooting steps:\n`;
+                errorMessage += `1. Run "ABAP Code Assistant: Diagnose Extension"\n`;
+                errorMessage += `2. Check the Output panel for detailed error messages\n`;
+                errorMessage += `3. Try running: python env_check.py in the extension/python directory\n`;
+                errorMessage += `4. Ensure you have Python 3.8+ and pip installed`;
+                
+                vscode.window.showErrorMessage(errorMessage);
+            }
+        });
+    } catch (error) {
+        vscode.window.showErrorMessage(`Installation failed: ${error.message}`);
+    }
+}
+
+async function checkEnvironmentStatus() {
+    try {
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Checking Environment...",
+            cancellable: false
+        }, async (progress) => {
+            progress.report({ message: "Running environment diagnostics..." });
+            
+            const pythonPath = getPythonPath();
+            if (!pythonPath) {
+                vscode.window.showErrorMessage('❌ Python not found. Please install Python 3.8+ first.');
+                return;
+            }
+            
+            try {
+                const result = await callPythonBackend('env_check', {});
+                if (result) {
+                    // Show the results in a new document
+                    const doc = await vscode.workspace.openTextDocument({
+                        content: `# Environment Check Results\n\n${result}`,
+                        language: 'markdown'
+                    });
+                    await vscode.window.showTextDocument(doc);
+                    vscode.window.showInformationMessage('✅ Environment check completed! Check the opened document for results.');
+                } else {
+                    vscode.window.showWarningMessage('⚠️ Environment check completed but no results returned.');
+                }
+            } catch (error) {
+                console.error(`Environment check failed: ${error.message}`);
+                vscode.window.showErrorMessage(`❌ Environment check failed: ${error.message}\n\nCheck the Output panel for details.`);
+            }
+        });
+    } catch (error) {
+        vscode.window.showErrorMessage(`Environment check failed: ${error.message}`);
     }
 }
 
