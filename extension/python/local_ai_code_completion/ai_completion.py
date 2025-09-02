@@ -44,13 +44,6 @@ class AICodeCompletion:
         self.is_generating = False
         self.is_aborted = False
         self.client = None  # Initialize client lazily
-
-        # Debug print: show if API key is loaded (mask for safety)
-        api_key = self.model_config.api_key if self.model_config else None
-        if api_key:
-            print(f"[Groq Debug] Loaded API key: {api_key[:6]}...{'*' * (len(api_key)-10) if len(api_key) > 10 else ''}{api_key[-4:]}")
-        else:
-            print("[Groq Debug] No API key loaded. Check GROQ_API_KEY env or .env file.")
     
     def _get_client(self):
         """Get or initialize the Groq client"""
