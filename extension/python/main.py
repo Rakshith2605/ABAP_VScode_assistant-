@@ -15,25 +15,77 @@ sys.path.insert(0, os.path.dirname(__file__))
 try:
     import groq
     GROQ_AVAILABLE = True
-except ImportError:
+except Exception:
     GROQ_AVAILABLE = False
     print("Warning: groq package not available. Please install dependencies.")
 
+
+# Try importing the packaged Python backend. It's possible the packaged files
+# are malformed (e.g. bad edits to logger.py) which can raise any exception
+# at import time. Catch all exceptions and provide safe fallbacks so the
+# extension doesn't crash on other machines.
 try:
     from local_ai_code_completion import config, logger, setup, ai_completion
-except ImportError as e:
-    print(f"Error: Missing dependencies. Please install required packages: {e}")
-    print("The extension will attempt to install dependencies automatically.")
-    # Provide fallbacks so the main process won't crash
+except Exception as e:
+    # Import failed (could be ImportError, NameError, SyntaxError, etc.)
+    print(f"Warning: could not load backend modules ({type(e).__name__}): {e}")
+    print("Falling back to safe defaults. Please reinstall or update the extension to fully enable features.")
+
+    # --- Fallback / dummy implementations ---
+    class _DummyModelConfig:
+        def __init__(self):
+            self.name = "llama-3.3-70b-versatile"
+            self.temperature = 0.3
+            self.top_p = 0.3
+            self.timeout = 15000
+            self.base_url = "https://api.groq.com"
+            self.api_key = ""
+
+    class _DummyConfig:
+        def get_model_config(self):
+            return _DummyModelConfig()
+
     class _DummyLogger:
-        def info(self, *a, **k):
-            print(*a)
-        def error(self, *a, **k):
-            print(*a)
-    config = None
+        def info(self, *args, **kwargs):
+            try:
+                print("INFO:", *args)
+            except Exception:
+                pass
+        def debug(self, *args, **kwargs):
+            try:
+                print("DEBUG:", *args)
+            except Exception:
+                pass
+        def warning(self, *args, **kwargs):
+            try:
+                print("WARN:", *args)
+            except Exception:
+                pass
+        def error(self, *args, **kwargs):
+            try:
+                print("ERROR:", *args)
+            except Exception:
+                pass
+        def critical(self, *args, **kwargs):
+            try:
+                print("CRITICAL:", *args)
+            except Exception:
+                pass
+        def dispose(self):
+            return
+
+    async def _dummy_setup():
+        return False
+
+    class _DummyAICompletion:
+        async def generate_code_with_prompt(self, prompt: str):
+            raise RuntimeError("AI completion backend not available in this installation")
+
+    # Assign fallbacks
+    config = _DummyConfig()
     logger = _DummyLogger()
-    setup = None
-    ai_completion = None
+    setup = type("_S", (), {"setup": staticmethod(_dummy_setup)})
+    ai_completion = _DummyAICompletion()
 
 
 def main():
@@ -321,4 +373,4 @@ def handle_env_check():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
