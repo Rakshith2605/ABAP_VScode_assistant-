@@ -6,6 +6,7 @@ import asyncio
 import json
 import time
 from typing import AsyncGenerator, Optional, Dict, Any
+import os
 
 # Conditional import to handle missing dependencies
 try:
@@ -35,7 +36,7 @@ class AICodeCompletion:
             self.is_aborted = False
             self.client = None
             return
-            
+
         if config:
             self.model_config = config.get_model_config()
         else:
@@ -43,6 +44,13 @@ class AICodeCompletion:
         self.is_generating = False
         self.is_aborted = False
         self.client = None  # Initialize client lazily
+
+        # Debug print: show if API key is loaded (mask for safety)
+        api_key = self.model_config.api_key if self.model_config else None
+        if api_key:
+            print(f"[Groq Debug] Loaded API key: {api_key[:6]}...{'*' * (len(api_key)-10) if len(api_key) > 10 else ''}{api_key[-4:]}")
+        else:
+            print("[Groq Debug] No API key loaded. Check GROQ_API_KEY env or .env file.")
     
     def _get_client(self):
         """Get or initialize the Groq client"""
@@ -53,13 +61,20 @@ class AICodeCompletion:
         if self.client is not None:
             return self.client
         
-        if not self.model_config or not self.model_config.api_key:
-            print("No Groq API key provided. Set GROQ_API_KEY environment variable.")
+        # Allow fallback to environment variable if config doesn't provide api_key
+        api_key = None
+        try:
+            api_key = self.model_config.api_key if self.model_config and getattr(self.model_config, 'api_key', None) else os.getenv('GROQ_API_KEY', None)
+        except Exception:
+            api_key = os.getenv('GROQ_API_KEY', None)
+
+        if not api_key:
+            print("No Groq API key provided. Set GROQ_API_KEY environment variable or update config.")
             return None
         
         try:
             # Initialize with minimal parameters to avoid compatibility issues
-            self.client = groq.Groq(api_key=self.model_config.api_key)
+            self.client = groq.Groq(api_key=api_key)
             return self.client
         except TypeError as e:
             # Handle version compatibility issues
@@ -67,7 +82,7 @@ class AICodeCompletion:
             print("Trying alternative initialization...")
             try:
                 # Try without any additional parameters
-                self.client = groq.Groq(api_key=self.model_config.api_key)
+                self.client = groq.Groq(api_key=api_key)
                 return self.client
             except Exception as e2:
                 print(f"Failed to initialize Groq client: {e2}")

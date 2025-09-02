@@ -4,6 +4,10 @@
 
 echo "🚀 Building ABAP Code Assistant VS Code Extension..."
 
+# Ensure script runs from its directory (extension/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR" || exit 1
+
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
     echo "❌ Node.js is not installed. Please install Node.js first."
@@ -23,8 +27,12 @@ if ! command -v vsce &> /dev/null; then
 fi
 
 # Install dependencies
-echo "📦 Installing dependencies..."
-npm install
+echo "📦 Installing dependencies in $PWD..."
+if [ -f package.json ]; then
+    npm install
+else
+    echo "⚠️ package.json not found in $PWD. Skipping npm install."
+fi
 
 # Package the extension
 echo "📦 Packaging extension..."

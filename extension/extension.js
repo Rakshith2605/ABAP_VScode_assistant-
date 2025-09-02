@@ -454,6 +454,33 @@ async function callPythonBackend(command, args = {}) {
             }
         });
         
+        // If API key was not explicitly provided, attempt to read a .env file in the python folder as a fallback
+        const fs = require('fs');
+        try {
+            if (!env['GROQ_API_KEY']) {
+                const envFile = path.join(__dirname, 'python', '.env');
+                if (fs.existsSync(envFile)) {
+                    const contents = fs.readFileSync(envFile, 'utf8');
+                    const lines = contents.split(/\r?\n/);
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed || trimmed.startsWith('#')) continue;
+                        const idx = trimmed.indexOf('=');
+                        if (idx === -1) continue;
+                        const k = trimmed.substring(0, idx).trim();
+                        const v = trimmed.substring(idx + 1).trim();
+                        if (k === 'GROQ_API_KEY' && v) {
+                            env['GROQ_API_KEY'] = v.replace(/^\"|\"$/g, '');
+                            console.log('Loaded GROQ_API_KEY from extension/python/.env');
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn('Could not read .env fallback:', err.message);
+        }
+
         console.log(`Environment variables: ${Object.keys(env).filter(k => k.includes('GROQ') || k.includes('LACC')).join(', ')}`);
         console.log(`GROQ_API_KEY set: ${env['GROQ_API_KEY'] ? 'YES' : 'NO'}`);
 

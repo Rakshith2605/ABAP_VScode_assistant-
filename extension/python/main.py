@@ -24,9 +24,14 @@ try:
 except ImportError as e:
     print(f"Error: Missing dependencies. Please install required packages: {e}")
     print("The extension will attempt to install dependencies automatically.")
-    # Don't exit immediately, let the setup handle it
+    # Provide fallbacks so the main process won't crash
+    class _DummyLogger:
+        def info(self, *a, **k):
+            print(*a)
+        def error(self, *a, **k):
+            print(*a)
     config = None
-    logger = None
+    logger = _DummyLogger()
     setup = None
     ai_completion = None
 
@@ -53,7 +58,10 @@ def main():
             print("Available commands: generate, setup, config, env_check")
             sys.exit(1)
     except Exception as e:
-        logger.error(f"Error in command '{command}': {e}")
+        try:
+            logger.error(f"Error in command '{command}': {e}")
+        except Exception:
+            print(f"Error in command '{command}': {e}")
         sys.exit(1)
 
 

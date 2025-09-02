@@ -13,10 +13,13 @@ A VS Code extension that provides AI-powered ABAP code assistant with code gener
 - **Keyboard Shortcuts**: Quick access with `Ctrl+Shift+G` and `Ctrl+Shift+D`
 
 ## Demo
+## Demo
 
-![ABAP Code Assistant Demo](public/abap_vid.gif)
+![ABAP Code Assistant Demo](https://raw.githubusercontent.com/Rakshith2605/ABAP_VScode_assistant-/main/extension/assets/abap_vid.gif)
 
 *Watch the ABAP Code Assistant in action - generating code from comments seamlessly!*
+
+Note: The GIF above is served from the GitHub repository raw URL so the Marketplace can display it without bundling the large file into the VSIX. If your repository is private, host the GIF on a public URL (GitHub Releases, S3, Imgur, etc.) and update the image URL accordingly.*
 
 *Note: The demo GIF shows the comment-based code generation feature in action. Select a comment and press Ctrl+Shift+G to see the magic happen!*
 

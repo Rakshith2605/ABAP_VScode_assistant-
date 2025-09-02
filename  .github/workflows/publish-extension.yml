@@ -1,0 +1,33 @@
+name: Publish VS Code Extension
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install vsce
+        run: npm install -g vsce
+      - name: Build extension
+        working-directory: extension
+        run: |
+          npm ci || true
+          vsce package
+      - name: Publish extension
+        if: github.event_name == 'push'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        working-directory: extension
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "VSCE_PAT not set, skipping publish";
+            exit 0;
+          fi
+          vsce publish -p "$VSCE_PAT"

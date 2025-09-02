@@ -2,7 +2,7 @@
   "name": "abap-code-assistant",
   "displayName": "ABAP Code Assistant",
   "description": "AI-powered ABAP code assistant with code generation and debugging using Groq API and Llama 3.3 70B Versatile model",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "engines": {
     "vscode": "^1.60.0"
   },
