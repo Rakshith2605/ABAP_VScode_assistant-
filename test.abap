@@ -4,3 +4,6 @@ SELECT * FROM VBAK INTO TABLE @DATA(lt_vbaks).
       EXPORTING
         textid = 'VBAK_SELECT_FAILED'.
   ENDIF.
+
+[Groq Debug] Loaded API key: gsk_vK...**********************************************izB1
+WRITE: / 'Hello World'.

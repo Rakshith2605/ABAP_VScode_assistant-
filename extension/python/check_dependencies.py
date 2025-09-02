@@ -79,7 +79,8 @@ def install_dependencies_flexible():
         "groq>=0.20.0",  # Allow newer versions
         "python-dotenv>=0.19.0",
         "pydantic>=1.8.0",  # Support both v1 and v2
-        "requests>=2.25.0"  # More common than rich, better compatibility
+        "requests>=2.25.0",  # HTTP requests
+        "rich>=10.0.0"  # Rich for pretty logging if available
     ]
     
     print("📦 Installing dependencies with flexible versions...")
@@ -132,7 +133,7 @@ def install_dependencies_flexible():
 
 def check_dependencies():
     """Check if required dependencies are installed"""
-    required_packages = ['groq', 'dotenv', 'pydantic']
+    required_packages = ['groq', 'dotenv', 'pydantic', 'rich']
     missing_packages = []
     
     print("🔍 Checking Python environment...")
